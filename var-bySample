@@ -1,0 +1,77 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+use List::Util qw(sum);
+
+
+my $usage = qq/
+# var-bySample fcastro v.121107\n
+Usage:   var-bySample [<arguments>] input.file > output.file\n
+Arguments:
+         -s	REQ <CSV> Columns positions (1-based) for sample genotypes. Samples with genotypes different to 0\/0, ., .\/. will be considered as having the variant  [\$opts{SAMPLECOL}]
+
+Description: Convert a table by mutation to by sample. Header containing the sample names must be included. Only the samples columns are required
+Input table example:
+	Chr\tPos\tRef\tAlt\tSample1\tSample2\tSample3\tSample4\tSample5
+	chr1\t4359284\tA\tC\t0\/0\t0\/1\t1\/1\t.\/.\t.
+Execution example:
+	var-baSample -s 5,6,7,8,9 example.tsv
+Output example:
+	Chr\tPos\tRef\tAlt\tSample
+	chr1\t4359284\tA\tC\tSample2
+	chr1\t4359284\tA\tC\tSample3
+\n/ ;
+
+# Input Variables
+my $inputFile =  $ARGV[$#ARGV];
+my %opts = (SAMPLECOL=>undef);
+
+my $result = GetOptions ("-s:s"  => \$opts{SAMPLECOL});
+die("Please, speficy -s option\n$usage!\n") if !defined $opts{SAMPLECOL};
+die("Input file $inputFile doesn't exists\n$usage!\n") if ! -e $inputFile;
+
+# OPEN INPUT FILE
+if ($inputFile =~ m/\.gz$/){
+	open (INPUTFILE, "gunzip -c $inputFile|");
+} else {
+	open (INPUTFILE, "<", $inputFile);
+}
+
+# READING SAMPLE COLUMNS
+my @sampleCol = split ",", $opts{SAMPLECOL};
+my @tmp = ();
+foreach (@sampleCol)
+{
+	my $based1 = $_ - 1 ;
+	push @tmp, $based1;
+}
+@sampleCol = @tmp;
+
+# HEADER
+my $inputHeader = <INPUTFILE>;
+chomp $inputHeader;
+my @header = split "\t", $inputHeader;
+my %SampleCols = map{$_ =>1} @sampleCol;
+my @headerBaseIndex = grep(!defined $SampleCols{$_}, (0 .. $#header));
+my @headerBase = @header[@headerBaseIndex];
+print join ("\t", @headerBase)."\tSample\n";
+
+# READING INPUT FILE
+while(<INPUTFILE>) 
+{
+	chomp;
+	my @line = split "\t", $_;
+	my @Base = @line[@headerBaseIndex];
+	my $outBase = join("\t", @Base);
+	foreach (@sampleCol)
+	{
+		my $out = 1;
+		$out = 0 if $line[$_] =~ m/\.\/\./;
+		$out = 0 if $line[$_] =~ m/^\.$/;
+		$out = 0 if $line[$_] =~ m/0\/0/;
+		$out = 0 if $line[$_] =~ m/^0$/;		
+		print $outBase."\t".$header[$_]."\n" if $out == 1;
+		
+	}
+}

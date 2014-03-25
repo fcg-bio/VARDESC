@@ -1,0 +1,113 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+
+
+my $usage = qq/
+# var-context fcastro v.121029\n
+Usage:   var-context [<arguments>] input.file\n
+Arguments: 
+         -b	OPT <String> Path to Bedtools binary file. Default: \/opt\/well\/bedtools\/bedtools-2.17.0\/bedtools  [\$opts{BEDtools}]
+         -g	OPT <FILE> Fasta file for reference genome. Default: \/well\/tomlinson\/fcastro\/data\/genomes\/hg19\/hg19_noChr.fasta [\$opts{GENOME}]
+         -c	OPT <FILE> Number of bases around the query position. Default: 1 [\$opts{CONTEXT}]
+
+Input file format :	 File should contain at least 4 fields, tabular separated (can be compressed - gzip)
+				1. Chromosome
+				2. Start
+				3. End
+If Start == End, 1-based format will be assumed
+If Start = End-1, 0-based format will be assumed
+
+Notes: Execution of var-context need bedtools installed
+
+Description: add mutation context for variants. Rate 100 variants\/second\/CPU. Output file will contain the original fields plus 3 additional fields:
+	1. Upstream - Upstream (5') region (region before the query position). Length of the output string will be determined by -c option
+	2. Downstream - Downstream (3') region (region after the query position). Length of the output string will be determined by -c option
+	3. RefRegion - Sequence of the query positions in the reference genome. This region should be equal to Ref string in SNPs and Deletions.
+
+\n/ ;
+
+
+# Input Variables
+my %opts = (VARFILE=>undef, BEDtools => "\/opt\/well\/bedtools\/bedtools-2.17.0\/bedtools", GENOME=>"\/well\/tomlinson\/fcastro\/data\/genomes\/hg19\/hg19_noChr.fasta", CONTEXT=>1);
+
+my $result = GetOptions ("-f:s"  => \$opts{VARFILE},
+						 "-b:s"   => \$opts{BEDtools},
+						 "-g:s"   => \$opts{GENOME},
+						 "-c:s"   => \$opts{CONTEXT}
+			);
+$opts{VARFILE} = $ARGV[$#ARGV];
+die ($usage) if ( !defined $opts{VARFILE} );
+die( "File $opts{VARFILE} doesn't exists\n$usage!\n") if ! -e $opts{VARFILE};
+die( "File $opts{SAMtools} doesn't exists\n$usage!\n") if ! -e $opts{BEDtools};
+die( "File $opts{GENOME} doesn't exists\n$usage!\n") if ! -e $opts{GENOME};
+
+# OPEN VAR FILE
+if ($opts{VARFILE} =~ m/\.gz$/){
+	open (VARFILE, "gunzip -c $opts{VARFILE}|");
+} else {
+	open (VARFILE, "<", $opts{VARFILE});
+}
+
+
+# READING VAR FILE AND WRITING 0-BASED BED FILE
+my %VAR;
+my $header = <VARFILE>;
+chomp $header;
+$VAR{HEADER} = $header;
+
+$opts{VARFILE} =~ /(.+\/)*(.+)$/;
+my $bedFile;
+$bedFile = ".".$2.".bed";
+$bedFile = $1.".".$2.".bed" if(defined($1));
+
+open (BEDFILE, ">", $bedFile);
+
+while (<VARFILE>)
+{
+	chomp;
+	my @items = split /\t/, $_;
+	my ($chr, $start, $end) = @items[0..2];
+	if ($items[1] == $items[2])
+	{
+		$start = $items[1]-1;
+		$end = $items[2];
+	}
+	$start = $start - $opts{CONTEXT};
+	$end = $end + $opts{CONTEXT};
+	print BEDFILE $chr."\t".$start."\t".$end."\n";
+	my $pos = $chr.":".$start."-".$end;
+	$VAR{VARIANTS}{$pos} = $_;
+}
+close(VARFILE);
+close(BEDFILE);
+
+# BEDTOOLS EXECUTION
+my $BEDtoolsFile = $bedFile.".bed";
+`$opts{BEDtools} getfasta -tab -fi $opts{GENOME} -bed $bedFile -fo $BEDtoolsFile`;
+
+
+# BEDTOOLS FILE READING AND OUTPUT PRINT
+open (BEDTOOLS, "<", $BEDtoolsFile);
+print $header."\tUpstream\tDownstream\tRefRegion\n";
+while (<BEDTOOLS>)
+{
+	chomp;
+	my @items = split /\t/, $_;
+	$items[1] = uc($items[1]);
+
+	my $refposition = $opts{CONTEXT};
+	
+	my $upSeq =  substr $items[1], 0, $opts{CONTEXT};
+	my $regionSeq =  substr $items[1], $opts{CONTEXT}, 1;
+	my $downSeq =  substr $items[1], $opts{CONTEXT}+1, $opts{CONTEXT};
+
+	print $VAR{VARIANTS}{$items[0]}."\t".$upSeq."\t".$downSeq."\t".$regionSeq."\n";
+}
+close(BEDTOOLS);
+
+unlink $bedFile;
+unlink $BEDtoolsFile;
+
+

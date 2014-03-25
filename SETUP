@@ -1,0 +1,52 @@
+# From wensleydale
+
+# 1. The scripts are developed for R version 3.0.2. Check that you have readable permissions for Rscript : /opt/well/R/R-3.0.2/bin/Rscript
+
+# 2. Setup R packages: Execute setup.R
+> ./setup.R
+
+# 3. The setup step is prepared for Hsapiens.UCSC.hg19 genome: the var-context.R needs the genome library from BSgenome bioconductor package : http://www.bioconductor.org/packages/release/bioc/html/BSgenome.html. If other genome is required, please ask fcastroginer@gmail.com
+
+# 4. Precompute dinucleotide and trinucleotide 
+library(BSgenome)
+library(BSgenome.Hsapiens.UCSC.hg19)
+
+Chrs <- names(Hsapiens)[grep("random|chrUn|upstream|_", names(Hsapiens), invert = T)]
+for (chr in Chrs) {
+	Seq <- Hsapiens[[chr]]
+	dnf <- trinucleotideFrequency(Seq)
+	data.dnf <- data.frame(Seq = names(dnf), Counts = dnf)
+	if(exists("ndist")) {
+		ndist <- merge(ndist, data.dnf, by="Seq", all=T)
+		ndist$Counts <- ndist$Counts.x + ndist$Counts.y
+		ndist <- ndist[,-c(2,3)]
+		#ndist[,c("Counts.x","Counts.y")] <- NULL
+	}
+	if(!exists("ndist")) {ndist <- data.dnf}
+}
+ndist$Prop <- ndist$Counts/sum(as.numeric(ndist$Counts))
+
+rm(ndist)
+
+data.frame(Sample = names(dnf), Counts = dnf)
+x1 <- data.frame(Counts = dnf)
+
+
+
+lapply(Chrs, print)
+
+Seq1=Hsapiens[[Chrs[1]]]
+Seq2=Hsapiens[[Chrs[2]]]
+dn1 <- dinucleotideFrequency(Seq1)
+dn2 <- dinucleotideFrequency(Seq2)
+x1 <- data.frame(Sample = names(dn1), Counts = dn1)
+x2 <- data.frame(Sample = names(dn2), Counts = dn2)
+merge(x1,x2,by="Sample", all=T)
+
+
+trinucleotideFrequency(yeast1)
+
+
+## !!!!!!!!!! Global installation of 
+	BSgenome
+	BSgenome.Hsapiens.UCSC.hg19
