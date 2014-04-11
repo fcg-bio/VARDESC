@@ -5,7 +5,7 @@ use Getopt::Long;
 
 
 my $usage = qq/
-# var-context fcastro v.121029\n
+# var-context fcastro v.140411\n
 Usage:   var-context [<arguments>] input.file\n
 Arguments: 
          -b	OPT <String> Path to Bedtools binary file. Default: \/opt\/well\/bedtools\/bedtools-2.17.0\/bedtools  [\$opts{BEDtools}]
@@ -53,6 +53,7 @@ if ($opts{VARFILE} =~ m/\.gz$/){
 
 # READING VAR FILE AND WRITING 0-BASED BED FILE
 my %VAR;
+my %COORD;
 my $header = <VARFILE>;
 chomp $header;
 $VAR{HEADER} = $header;
@@ -76,12 +77,25 @@ while (<VARFILE>)
 	}
 	$start = $start - $opts{CONTEXT};
 	$end = $end + $opts{CONTEXT};
-	print BEDFILE $chr."\t".$start."\t".$end."\n";
+	#print BEDFILE $chr."\t".$start."\t".$end."\n";
+	$COORD{$chr}{$start}{$end} = 1;
+	
 	my $pos = $chr.":".$start."-".$end;
-	$VAR{VARIANTS}{$pos} = $_;
+	push(@{$VAR{VARIANTS}{$pos}},$_);
 }
 close(VARFILE);
+
+# PRINT FILE
+open (BEDFILE, ">", $bedFile);
+for my $chr ( sort keys %COORD) {
+	for my $start ( sort keys %{$COORD{$chr}}) {
+		for my $end ( sort keys %{$COORD{$chr}{$start}}) {
+			print BEDFILE $chr."\t".$start."\t".$end."\n";
+		}
+	}
+}
 close(BEDFILE);
+
 
 # BEDTOOLS EXECUTION
 my $BEDtoolsFile = $bedFile.".bed";
@@ -103,7 +117,10 @@ while (<BEDTOOLS>)
 	my $regionSeq =  substr $items[1], $opts{CONTEXT}, 1;
 	my $downSeq =  substr $items[1], $opts{CONTEXT}+1, $opts{CONTEXT};
 
-	print $VAR{VARIANTS}{$items[0]}."\t".$upSeq."\t".$downSeq."\t".$regionSeq."\n";
+	foreach (@{$VAR{VARIANTS}{$items[0]}})
+	{
+		print $_."\t".$upSeq."\t".$downSeq."\t".$regionSeq."\n";
+	}
 }
 close(BEDTOOLS);
 
