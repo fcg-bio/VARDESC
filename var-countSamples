@@ -83,6 +83,6 @@ while(<INPUTFILE>)
 
 	}
 	$VarProportion1 = $VarCount/$totalSamples;
-	$VarProportion2 = $VarCount/($totalSamples-$VarNA);
+	$VarProportion2 = $VarCount/($totalSamples-$VarNA) if(($totalSamples-$VarNA) > 0);
 	print $_."\t$VarCount\t$VarProportion1\t$VarProportion2\t$VarHet\t$VarHom\t$VarNA\n";
 }
