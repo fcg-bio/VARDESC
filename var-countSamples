@@ -1,0 +1,88 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+use List::Util qw(sum);
+
+
+my $usage = qq/
+# var-bySample fcastro v.140414\n
+Usage:   var-countSamples [<arguments>] input.file > output.file\n
+Arguments:
+         -s	REQ <NUM,CSV> Columns positions (1-based) for sample genotypes. Samples with genotypes different to 0\/0, ., .\/. will be considered as having the variant  [\$opts{SAMPLECOL}]
+         -ref OPT <STR> Reference genotype. Default 0\/0
+         -missing OPF <STR> Missing genotype. Default .\/.
+
+Description: Add additional columns summarising the number of samples with variant alleles
+	Chr\tPos\tRef\tAlt\tSample1\tSample2\tSample3\tSample4\tSample5
+	chr1\t4359284\tA\tC\t0\/0\t0\/1\t1\/1\t.\/.\t.
+Execution example:
+	var-bcounSamples -s 5,6,7,8,9 example.tsv
+Output example:
+	Chr\tPos\tRef\tAlt\tSample1\tSample2\tSample3\tSample4\tSample5\tVarCount\tVarProportion1\tVarProportion2\tVarHet\tVarHom\tVarNA
+	chr1\t4359284\tA\tC\t0\/0\t0\/1\t1\/1\t.\/.\t.\/.\t2\t0.4\t0.66\t1\t1\t2
+New columns created:
+	- VarCount : number of variant samples
+	- VarProportion1 : proportion of samples with variant alleles
+	- VarProportion2 : proportion of samples with variant alleles excluding missing from total variants
+	- VarHet : number of heterozygous samples
+	- VarHom : number of homozygous samples
+	- VarNA : number of samples with missing genotype
+\n/ ;
+
+# Input Variables
+my $inputFile =  $ARGV[$#ARGV];
+my %opts = (SAMPLECOL=>undef, REF=>"0\/0", NA=>".\/.");
+
+my $result = GetOptions ("-s:s"  => \$opts{SAMPLECOL});
+die("Please, speficy -s option\n$usage!\n") if !defined $opts{SAMPLECOL};
+die("Input file $inputFile doesn't exists\n$usage!\n") if ! -e $inputFile;
+
+# OPEN INPUT FILE
+if ($inputFile =~ m/\.gz$/){
+	open (INPUTFILE, "gunzip -c $inputFile|");
+} else {
+	open (INPUTFILE, "<", $inputFile);
+}
+
+# READING SAMPLE COLUMNS - converting to 0-based
+my @sampleCol = split ",", $opts{SAMPLECOL};
+my @tmp = ();
+foreach (@sampleCol)
+{
+	my $based1 = $_ - 1 ;
+	push @tmp, $based1;
+}
+@sampleCol = @tmp;
+
+# HEADER
+my $inputHeader = <INPUTFILE>;
+chomp $inputHeader;
+print $inputHeader."\tVarCount\tVarProportion1\tVarProportion2\tVarHet\tVarHom\tVarNA\n";
+
+# READING INPUT FILE
+while(<INPUTFILE>) 
+{
+	chomp;
+	my @line = split "\t", $_;
+	
+	my ($VarCount,$VarProportion1,$VarProportion2,$VarHet,$VarHom,$VarNA)=(0,0,0,0,0,0);
+	my $totalSamples = scalar(@sampleCol);
+	
+	foreach (@sampleCol)
+	{
+		my $geno = $line[$_];
+		if($geno ne $opts{REF} && $geno ne $opts{NA})
+		{
+			$VarCount++;
+			$VarHet++ if($geno =~ m/0/);
+			$VarHom++ if($geno !~ m/0/);
+		} elsif ($geno =~ m/\.\/\./) {
+			$VarNA++;
+		}
+
+	}
+	$VarProportion1 = $VarCount/$totalSamples;
+	$VarProportion2 = $VarCount/($totalSamples-$VarNA);
+	print $_."\t$VarCount\t$VarProportion1\t$VarProportion2\t$VarHet\t$VarHom\t$VarNA\n";
+}

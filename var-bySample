@@ -16,7 +16,7 @@ Input table example:
 	Chr\tPos\tRef\tAlt\tSample1\tSample2\tSample3\tSample4\tSample5
 	chr1\t4359284\tA\tC\t0\/0\t0\/1\t1\/1\t.\/.\t.
 Execution example:
-	var-baSample -s 5,6,7,8,9 example.tsv
+	var-bySample -s 5,6,7,8,9 example.tsv
 Output example:
 	Chr\tPos\tRef\tAlt\tSample
 	chr1\t4359284\tA\tC\tSample2
