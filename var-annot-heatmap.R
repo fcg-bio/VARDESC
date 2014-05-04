@@ -39,6 +39,7 @@ usage <- "
 arguments <- list (file=NULL, prefix="vardesc", minMut=2, sclust="alphanumeric")	
 argsRaw<-commandArgs(trailingOnly = T)
 
+options(warning.length=8000)
 if (length(argsRaw) == 0)  stop(usage)
 if (argsRaw[1] == "help") stop(usage)
 

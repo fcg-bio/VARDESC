@@ -24,24 +24,20 @@ usage <- "
 		bySample : plot by sample
 		BSgenome : name of the genome as described in th R library BSgenome. By default BSgenome.Hsapiens.UCSC.hg19. Other genomes must be installed
 		fasta : fasta file containing the genome to analyse. In case that BSgenome is not installed or Exome analysis. Default = NULL
-		
-Example of exome analysis :
-#1. Create Targeted Fasta from a bed, gff or vcf file
-bedtools getfasta -fi <fasta> -bed <bed/gff/vcf> -fo <fasta>
-#2. Run var-context
-var-context.R prefix=outfile bySample fasta=genome.fa file.tsv
+		bed : bed files containing coordinates to use in normalizated plots. Useful for exome analysis
 
-	"
+"
 }
 
 
 # Getting Arguments indicated by '=' and printing usage
 {
 
-arguments <- list (file=NULL, bySample=NULL, prefix="vardesc", BSgenome="BSgenome.Hsapiens.UCSC.hg19", fasta=NULL)	
+arguments <- list (file=NULL, bySample=NULL, prefix="vardesc", BSgenome="BSgenome.Hsapiens.UCSC.hg19", fasta=NULL, bed=NULL)	
 argsRaw<-commandArgs(trailingOnly = T)
 
-if (length(argsRaw) == 0)  stop(usage)
+options(warning.length=8000)
+if (length(argsRaw) == 0) stop(usage)
 if (argsRaw[1] == "help") stop(usage)
 
 # Get input file name
@@ -90,7 +86,8 @@ if(!is.null(arguments$BSgenome)) library(arguments$BSgenome, warn.conflicts = F,
 #	arguments <- list (file=NULL, bySample=NA, prefix="test", fasta="test.bed.fa")
 #	arguments <- list (file=NULL, bySample=NA, prefix="test")
 #	arguments$file<-"context.SNV.PRCC.tsv"
-
+# arguments$file<-"context3.tsv"
+  
 vartab <- read.table(arguments$file, stringsAsFactors = F, header = T)
 
 #	vartab$Group[vartab$Sample %in% c("P01","P02","P03","P04","P05","P06","P07","P08","P09","P10","P11")] <- "Type1"
@@ -187,15 +184,25 @@ if(!is.null(arguments$fasta)) {
 context.length <- 1 + nchar(vartab$Upstream[1]) + nchar(vartab$Downstream[1])
 
 # Calculate the frequency of each context string in the reference genome + dinucleotide composition
-
+  
 	# BSgenome
+  if (!is.null(arguments$bed)) bed <- read.delim(arguments$bed, header=F)
+
 	if (is.null(arguments$fasta)) {
 		Chrs <- names(Genome)[grep("random|chrUn|upstream|_", names(Genome), invert = T)]
 		for (chr in Chrs) {
 			Seq <- Genome[[chr]]
-			onf <- oligonucleotideFrequency(Seq, context.length)
-			dnf <- dinucleotideFrequency(Seq)
-
+			if (!is.null(arguments$bed)) {
+			  Start <- bed[bed[1] == chr,2]
+			  End <- bed[bed[1] == chr,3]
+			  Seq <- suppressWarnings(Views(Seq, start=Start, end=End))
+			  onf <- colSums(oligonucleotideFrequency(Seq, context.length))
+			  dnf <- colSums(dinucleotideFrequency(Seq))
+			} else {
+			  onf <- oligonucleotideFrequency(Seq, context.length)
+			  dnf <- dinucleotideFrequency(Seq)
+			}
+      
 			data.onf <- data.frame(RefRegion = names(onf), RefRegionCounts = onf)
 			data.dnf <- data.frame(RefRegion = names(dnf), RefRegionCounts = dnf)
 
@@ -214,6 +221,12 @@ context.length <- 1 + nchar(vartab$Upstream[1]) + nchar(vartab$Downstream[1])
 
 	# Fasta
 	if (!is.null(arguments$fasta)) {
+	  if (!is.null(arguments$bed)) {
+	    Start <- bed[,2]
+	    End <- bed[,3]
+	    Seq <- Views(Seq, start=bed[1], end=End)
+	  }
+    
 		onf <- colSums(oligonucleotideFrequency(Genome, context.length))
 		nodist <- data.frame(RefRegion=names(onf), RefRegionCounts=onf)
 		
