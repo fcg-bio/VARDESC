@@ -10,6 +10,7 @@ library(fmsb, warn.conflicts = F, quietly = T)
 library(gplots, warn.conflicts = F, quietly = T)
 library(fdrtool, warn.conflicts = F, quietly = T)
 library(pheatmap, warn.conflicts = F, quietly = T)
+library(plyr, warn.conflicts = F, quietly = T)
 }
 
 
@@ -317,7 +318,8 @@ for(i in 1:length(argsRaw)){
 #	arguments$file<-"test.SNV.PRCC.tsv"
 #	arguments$file<-"TCGA_CRCexome_var-spectrum.tsv"
 #	arguments$file<-"TCGA_MELANOMA.snp.tsv"
-
+# arguments <- list (file="/media/DATA/WTCHG/projects/PRCC/PRCC_vardesc_FCastro/PRCC.vardesc.tsv", bySample=T, prefix="test")
+  
 vartab <- read.table(arguments$file, stringsAsFactors = F, header = T)
 
 
@@ -649,11 +651,11 @@ gtabS$Sample <- factor(as.character(gtabS$Sample), levels = orderedSampleFactors
 
 # Build the plot
 xTextSize <- 1
-if(dim(gtabS)[1] < 260) xTextSize <- 2
-if(dim(gtabS)[1] < 200) xTextSize <- 3
-if(dim(gtabS)[1] < 160) xTextSize <- 5
-if(dim(gtabS)[1] < 140) xTextSize <- 6
-if(dim(gtabS)[1] < 100) xTextSize <- 8
+if(nlevels(gtabS$Sample) < 260) xTextSize <- 2
+if(nlevels(gtabS$Sample) < 200) xTextSize <- 3
+if(nlevels(gtabS$Sample) < 160) xTextSize <- 5
+if(nlevels(gtabS$Sample) < 140) xTextSize <- 6
+if(nlevels(gtabS$Sample) < 100) xTextSize <- 8
 
 
 out <- ggplot(data=gtabS, aes(x=Sample, y=Freq, fill=Variant)) + geom_bar(stat="identity") + scale_fill_brewer(palette = "Spectral") + theme(
@@ -692,7 +694,8 @@ if(!is.null(arguments$bySample))
 	out <-  ggplot(data=dStatsSpectrum, aes(x=Sample, y=p.value)) + 
 		geom_point() +
 		scale_y_continuous(name="-log10(p-value)") + 
-		geom_hline(yintercept=-log10(0.05), colour="#990000", linetype="dashed")
+		geom_hline(yintercept=-log10(0.05), colour="#990000", linetype="dashed") + 
+	  theme(axis.text.x  = element_text(angle=90, vjust=0.5, size=xTextSize))
 		
 	stacked.barplot <- stacked.barplot + theme(legend.position="bottom")
 
@@ -734,11 +737,11 @@ gtabS$Sample <- factor(as.character(gtabS$Sample), levels = orderedSampleFactors
 
 # Build the plot
 xTextSize <- 1
-if(dim(gtabS)[1] < 260) xTextSize <- 2
-if(dim(gtabS)[1] < 200) xTextSize <- 3
-if(dim(gtabS)[1] < 160) xTextSize <- 5
-if(dim(gtabS)[1] < 140) xTextSize <- 6
-if(dim(gtabS)[1] < 100) xTextSize <- 8
+if(nlevels(gtabS$Sample) < 260) xTextSize <- 2
+if(nlevels(gtabS$Sample) < 200) xTextSize <- 3
+if(nlevels(gtabS$Sample) < 160) xTextSize <- 5
+if(nlevels(gtabS$Sample) < 140) xTextSize <- 6
+if(nlevels(gtabS$Sample) < 100) xTextSize <- 8
 
 out <- ggplot(data=gtabS, aes(x=Sample, y=Freq, fill=Variant)) + geom_bar(stat="identity") + scale_fill_brewer(palette = "Spectral") + theme(
     plot.background = element_blank()
@@ -775,7 +778,8 @@ if(!is.null(arguments$bySample))
 
 	out <-  ggplot(data=CountsTab, aes(x=Sample, y=Freq)) + 
 		geom_point() +
-		scale_y_continuous(name="Number of Mutations")
+		scale_y_continuous(name="Number of Mutations") + 
+	  theme(axis.text.x  = element_text(angle=90, vjust=0.5, size=xTextSize))
 		
 	stacked.barplot <- stacked.barplot + theme(legend.position="bottom")
 
@@ -1049,17 +1053,17 @@ def.palette <- palette()
 heatCol <- brewer.pal(5, "PuBu") # palette for heatmap
 
 # Plot size
-Height <- 0.03*dim(htabm)[2]
-Width <- 0.05*dim(htabm)[2]
+Height <- 0.05*dim(htabm)[2]
+Width <- 0.08*dim(htabm)[2]
 
 # Column text size
 xTextSize <- 0.5
 if(dim(htabm)[2] < 300) xTextSize <- 1
 if(dim(htabm)[2] < 260) xTextSize <- 2
 if(dim(htabm)[2] < 200) xTextSize <- 3
-if(dim(htabm)[2] < 160) xTextSize <- 5
-if(dim(htabm)[2] < 140) xTextSize <- 6
-if(dim(htabm)[2] < 100) xTextSize <- 8
+if(dim(htabm)[2] < 160) xTextSize <- 4
+if(dim(htabm)[2] < 140) xTextSize <- 5
+
 
 # Plotting data
 pdfName <- paste(arguments$prefix,"spectrum_heatmap.pdf", sep=".")
@@ -1073,7 +1077,7 @@ pdf(pdfName, width= Width, height= Height, title = "Mutation Spectrum")
 
 #	if(is.null(vartab$Group)) heatmap.2(t(htabm), col=heatCol, dendrogram="row", scale="row", ylab="Samples", na.rm=T, trace="none", colsep=c(1:dim(htabm)[2]), rowsep=c(1:dim(htabm)[1]), sepwidth=c(0.01, 0.01), sepcolor='white', keysize=1)
 
-	if(is.null(vartab$Group)) pheatmap(htabm, border_color=NA, col=heatCol, fontsize_col = xTextSize)
+	if(is.null(vartab$Group)) pheatmap(htabm, border_color=NA, col=heatCol, fontsize_col = xTextSize, fontsize=xTextSize)
 
 		
 	palette(def.palette)

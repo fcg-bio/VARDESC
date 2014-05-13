@@ -2,6 +2,7 @@
 cran.packages <- c(
 	"RColorBrewer"
 	,"ggplot2"
+	,"plyr"
 	,"reshape"
 	,"fmsb"
 	,"gplots"

@@ -12,7 +12,7 @@ Arguments:
          -g	OPT <FILE> Fasta file for reference genome. Default: \/well\/tomlinson\/fcastro\/data\/genomes\/hg19\/hg19_noChr.fasta [\$opts{GENOME}]
          -c	OPT <FILE> Number of bases around the query position. Default: 1 [\$opts{CONTEXT}]
 
-Input file format :	 File should contain at least 4 fields, tabular separated (can be compressed - gzip)
+Input file format :	 File should contain at least 3 fields, tabular separated (can be compressed - gzip)
 				1. Chromosome
 				2. Start
 				3. End
