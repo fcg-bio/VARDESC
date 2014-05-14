@@ -1053,8 +1053,8 @@ def.palette <- palette()
 heatCol <- brewer.pal(5, "PuBu") # palette for heatmap
 
 # Plot size
-Height <- 0.05*dim(htabm)[2]
-Width <- 0.08*dim(htabm)[2]
+Height <- 0.10*dim(htabm)[2]
+Width <- 0.15*dim(htabm)[2]
 
 # Column text size
 xTextSize <- 0.5
