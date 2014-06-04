@@ -24,7 +24,7 @@ usage <- "
 		bySample : plot by sample
 		BSgenome : name of the genome as described in th R library BSgenome. By default BSgenome.Hsapiens.UCSC.hg19. Other genomes must be installed
 		fasta : fasta file containing the genome to analyse. In case that BSgenome is not installed or Exome analysis. Default = NULL
-		bed : bed files containing coordinates to use in normalizated plots. Useful for exome analysis
+		bed : bed files containing coordinates to normalize frequencies. Contigs must has the UCSC annotation (ex.: chr1). Useful for exome analysis
 
 "
 }
