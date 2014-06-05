@@ -88,7 +88,7 @@ if(!is.null(arguments$BSgenome)) library(arguments$BSgenome, warn.conflicts = F,
 #	arguments$file<-"context.SNV.PRCC.tsv"
 # arguments$file<-"context3.tsv"
   
-vartab <- read.table(arguments$file, stringsAsFactors = F, header = T)
+vartab <- read.table(arguments$file, stringsAsFactors = F, header = T, sep="\t")
 
 #	vartab$Group[vartab$Sample %in% c("P01","P02","P03","P04","P05","P06","P07","P08","P09","P10","P11")] <- "Type1"
 #	vartab$Group[vartab$Sample %in% c("P12","P13","P14","P15","P16","P17","P18","P19","P20","P21","P22","P23")] <- "Type2"

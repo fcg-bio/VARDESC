@@ -320,7 +320,7 @@ for(i in 1:length(argsRaw)){
 #	arguments$file<-"TCGA_MELANOMA.snp.tsv"
 # arguments <- list (file="/media/DATA/WTCHG/projects/PRCC/PRCC_vardesc_FCastro/PRCC.vardesc.tsv", bySample=T, prefix="test")
   
-vartab <- read.table(arguments$file, stringsAsFactors = F, header = T)
+vartab <- read.table(arguments$file, stringsAsFactors = F, header = T, sep="\t")
 
 
 #	vartab$Group[vartab$Sample %in% c("P01","P02","P03","P04","P05","P06","P07","P08","P09","P10","P11")] <- "Type1"

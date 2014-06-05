@@ -100,7 +100,7 @@ if(!file.exists(arguments$chrCoord)) stop("Chromosomes coordinates file doesn't 
 #	arguments <- list (file=NULL, bySample=NA, prefix="test", centromere="hg19_noChr.centromere.bed", chrCoord="hg19_noChr.coordinates.bed")
 #	arguments$file<-"test.SNV.PRCC.tsv"
 
-vartab <- read.delim(arguments$file, stringsAsFactors = F)
+vartab <- read.delim(arguments$file, stringsAsFactors = F, sep="\t")
 
 
 # Reading chromosomes coordinates

@@ -71,7 +71,7 @@ arguments$minMut <- as.numeric(arguments$minMut)
 	#	arguments <- list (file=NULL, bySample=NA, minMut=2, sclust="alphanumeric", prefix = "test")
 	#	arguments$file<-"annot.SNV.PRCC.tsv"
 
-	vartab <- read.delim(arguments$file, stringsAsFactors = F)
+	vartab <- read.delim(arguments$file, stringsAsFactors = F, sep="\t")
 	if(is.null(vartab$Sample)) stop("Input table doesn't contain Sample colum",usage)
 	if(is.null(vartab$Group) & arguments$sclust == "group") stop("group option for sclust could not be used because input table doesn't contain Group variable",usage)
 
