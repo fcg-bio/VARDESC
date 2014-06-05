@@ -40,7 +40,7 @@ my $result = GetOptions ("-f:s"  => \$opts{VARFILE},
 $opts{VARFILE} = $ARGV[$#ARGV];
 die ($usage) if ( !defined $opts{VARFILE} );
 die( "File $opts{VARFILE} doesn't exists\n$usage!\n") if ! -e $opts{VARFILE};
-die( "File $opts{SAMtools} doesn't exists\n$usage!\n") if ! -e $opts{BEDtools};
+die( "File $opts{BEDtools} doesn't exists\n$usage!\n") if ! -e $opts{BEDtools};
 die( "File $opts{GENOME} doesn't exists\n$usage!\n") if ! -e $opts{GENOME};
 
 # OPEN VAR FILE
